@@ -1,0 +1,20 @@
+width: 32 # In pixels
+height: 16 # In pixels
+fontPath: ./tom-thumb.pil # Path to your font file
+fontHeight: 5 # Vertical size of your font
+darksky_key:  # API key for darksky.net
+latitude:  # Latiude of device
+longitude: # Longitude of device
+
+led:
+  rows: 32   # Display rows. 16 for 16x32, 32 for 32x32
+  chain: 1   # Daisy-chained boards
+  parallel: 1 # Parallel chains (for plus-models or RPi2). Range 1 - 3
+  pwm_bits: 11   # Bits used for PWM. Range 1 - 11
+  brightness: 100   # Sets brightness level. Range 1-100
+  gpio_mapping: regular   # GPIO mapping (regular, adafruit-hat, adafruit-hat-pwm)
+  scan_mode: 1   # Progressive (0) or interlaced scan (1)
+  pwm_lsb_nanoseconds: 130   # Base time-unit for the on-time in the lowest significant bit (in nanosecods)
+  show_refresh: True   # Shows the current refresh rate of the LED panel
+  slowdown_gpio: 1 # Slow down writing to GPIO. Range 1-100
+  no_hardware_pulse: False   # Don't use hardware pin-pulse generation
