@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from base import Base
 from PIL import Image, ImageDraw, ImageFont
-from collections import Counter
 import glob
 import re
 import time
@@ -105,17 +104,14 @@ class Displayboard(Base):
                 last_icon = icon
 
     def run(self):
-        self.width = self.config['width']
-        self.height = self.config['height']
-
         self.font = ImageFont.load(self.config['fontPath'])
         self.fontHeight = self.config['fontHeight']
-        self.image = Image.new('RGB', [self.width, self.height])
-        self.forecasts = self.getHourlyForecasts()
 
-        self.drawTemp()
-        self.drawWeather()
-        self.draw(self.image)
+        while True:
+            self.forecasts = self.getHourlyForecasts()
+            self.drawTemp()
+            self.drawWeather()
+            self.draw()
 
 
 # Main function

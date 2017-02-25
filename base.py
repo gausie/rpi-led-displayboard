@@ -2,6 +2,8 @@ import time
 import sys
 import os
 import yaml
+from PIL import Image, ImageTk
+from tkinter import Tk, Label
 
 
 class FakeModule(object):
@@ -18,16 +20,34 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions  # noqa
 
 
+class ImagePreview(Label):
+    def __init__(self, master, im):
+        self.master = master
+        self.image = ImageTk.PhotoImage(self.prepareImage(im))
+
+        Label.__init__(self, self.master, image=self.image, bg="black", bd=0)
+
+        self.pack()
+        self.update()
+
+    def prepareImage(self, im):
+        return im.copy().resize([500, 250])
+
+    def next(self, im):
+        self.image.paste(self.prepareImage(im))
+        self.pack()
+        self.update_idletasks()
+
+
 class Base(object):
     def run(self):
         print('Running')
 
-    def draw(self, image):
-        if (env == 'development'):
-            resized = image.copy().resize([500, 250])
-            resized.show(title='RGB', command='display -sample \'500%\'')
+    def draw(self):
+        if (env == 'production'):
+            self.matrix.SetImage(self.image.convert('RGB'))
         else:
-            self.matrix.SetImage(image.convert('RGB'))
+            self.imagePreview.next(self.image)
 
     def optionsFromConfig(self, config):
         options = RGBMatrixOptions()
@@ -51,15 +71,25 @@ class Base(object):
         with open('config.yaml', 'r') as ymlfile:
             self.config = yaml.load(ymlfile)
 
+        self.width = self.config['width']
+        self.height = self.config['height']
+
+        self.image = Image.new('RGB', [self.width, self.height])
+
         if (env == 'production'):
             led_config = self.config['led']
             options = self.optionsFromConfig(led_config)
             self.matrix = RGBMatrix(options=options)
+        else:
+            self.tk = Tk()
+            self.tk.title('LED')
+            self.imagePreview = ImagePreview(self.tk, self.image)
 
         try:
             # Start loop
             print('Press CTRL-C to stop sample')
             self.run()
+
         except KeyboardInterrupt:
             print('Exiting\n')
             sys.exit(0)
