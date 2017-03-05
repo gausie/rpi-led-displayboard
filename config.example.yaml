@@ -2,9 +2,15 @@ width: 32 # In pixels
 height: 16 # In pixels
 fontPath: ./tom-thumb.pil # Path to your font file
 fontHeight: 5 # Vertical size of your font
-darksky_key:  # API key for darksky.net
-latitude:  # Latiude of device
-longitude: # Longitude of device
+
+weather: # Weather module
+  darksky_key:  # API key for darksky.net
+  latitude:  # Latiude of device
+  longitude: # Longitude of device
+
+edinburgh_bus: # Edinburgh Buses (MyBusTracker) module
+  stop_code: # MyBusTracker code for the stop you would like to track
+  api_key: # API key for MyBusTracker
 
 led:
   rows: 32   # Display rows. 16 for 16x32, 32 for 32x32

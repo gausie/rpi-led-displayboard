@@ -7,11 +7,19 @@ import time
 import os
 import urllib.request as request
 import json
+from itertools import cycle
 
 
 class Displayboard(Base):
     def __init__(self, *args, **kwargs):
         super(Base, self).__init__(*args, **kwargs)
+
+    def drawBlank(self):
+        draw = ImageDraw.Draw(self.image)
+
+        draw.rectangle([(0, 0), (self.width, self.height)], '#000', '#000')
+
+        del draw
 
     def getLatestForecastsFile(self):
         files = glob.glob('/tmp/forecast-[0-9]*.json')
@@ -40,9 +48,10 @@ class Displayboard(Base):
         return json.loads(forecasts)
 
     def downloadForecasts(self):
-        key = self.config.get('darksky_key')
-        lat = self.config.get('latitude')
-        lng = self.config.get('longitude')
+        weather_config = self.config.get('weather')
+        key = weather_config.get('darksky_key')
+        lat = weather_config.get('latitude')
+        lng = weather_config.get('longitude')
 
         template = 'https://api.darksky.net/forecast/{}/{!s},{!s}?units=si'
         url = template.format(key, lat, lng)
@@ -60,7 +69,7 @@ class Displayboard(Base):
         forecasts = self.getForecasts()
 
         if(hours is False):
-            hours = round(self.width / 2)
+            hours = round(self.width / 2) + 1
 
         return forecasts['hourly']['data'][:hours]
 
@@ -103,15 +112,50 @@ class Displayboard(Base):
                 self.image.paste(icon_image, (index * 2, 0))
                 last_icon = icon
 
+    def drawSceneWeather(self):
+        self.forecasts = self.getHourlyForecasts()
+        self.drawTemp()
+        self.drawWeather()
+
+    def drawSceneBus(self):
+        draw = ImageDraw.Draw(self.image)
+
+        draw.text(
+            (0, self.fontHeight - 1),
+            'Bus times',
+            font=self.font
+        )
+
+        del draw
+
     def run(self):
         self.font = ImageFont.load(self.config['fontPath'])
         self.fontHeight = self.config['fontHeight']
 
+        interval = int(self.config.get('sceneInterval', 10))
+        frame_delay = int(self.config.get('frameDelay', 0))
+
+        interval_start = 0
+        scene = 0
+
+        scene_cycle = cycle([0, 1])
+
         while True:
-            self.forecasts = self.getHourlyForecasts()
-            self.drawTemp()
-            self.drawWeather()
+            now = time.time()
+            if now - interval_start > interval:
+                interval_start = now
+                scene = next(scene_cycle)
+                self.drawBlank()
+
+            if scene == 0:
+                self.drawSceneWeather()
+
+            if scene == 1:
+                self.drawSceneBus()
+
             self.draw()
+
+            time.sleep(frame_delay)
 
 
 # Main function
