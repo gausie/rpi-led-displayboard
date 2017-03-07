@@ -166,12 +166,23 @@ class Displayboard(Base):
 
         del draw
 
-    def drawSceneBus(self):
+    def drawAnimatedBus(self, fraction):
+        bus_image = Image.open('./icons/edinburgh-bus.ppm')
+        (width, height) = bus_image.size
+
+        bump = (1 if int(fraction * 100) % 10 == 0 else 0)
+        x = int(fraction * (32 + width)) - width
+        y = self.height - height - bump
+
+        self.image.paste(bus_image, (x, y))
+
+    def drawSceneBus(self, fraction):
         self.bus_times = self.retrieve_data('edinburgh_bus',
                                             self.downloadBusTimes,
                                             30)
 
         self.drawBusTimes()
+        self.drawAnimatedBus(fraction)
 
     def run(self):
         self.font = ImageFont.load(self.config['fontPath'])
