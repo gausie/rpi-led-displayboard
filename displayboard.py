@@ -21,31 +21,31 @@ class Displayboard(Base):
 
         del draw
 
-    def getLatestForecastsFile(self):
-        files = glob.glob('/tmp/forecast-[0-9]*.json')
+    def get_latest_file(self, prefix):
+        files = glob.glob('/tmp/{}-[0-9]*.json'.format(prefix))
 
         if len(files) == 0:
             return False
 
         return files[0]
 
-    def getForecasts(self):
-        filename = self.getLatestForecastsFile()
+    def retrieve_data(self, name, download_method, decay=600):
+        filename = self.get_latest_file(name)
 
         if filename is False:
-            forecasts = self.downloadForecasts()
+            data = download_method()
         else:
-            search = re.search('/tmp/forecast-([0-9]+).json', filename)
+            search = re.search('/tmp/{}-([0-9]+).json'.format(name), filename)
             lastTime = search.group(1) if search is not None else 0
 
-            if (time.time() - int(lastTime)) > 60 * 10:
+            if (time.time() - int(lastTime)) > decay:
                 os.remove(filename)
-                forecasts = self.downloadForecasts()
+                data = download_method()
             else:
                 with open(filename, 'r') as file:
-                    forecasts = file.read()
+                    data = file.read()
 
-        return json.loads(forecasts)
+        return json.loads(data)
 
     def downloadForecasts(self):
         weather_config = self.config.get('weather')
@@ -58,7 +58,7 @@ class Displayboard(Base):
 
         data = request.urlopen(url).read().decode('utf-8')
 
-        now = time.time()
+        now = int(time.time())
         filename = '/tmp/forecast-{!s}.json'.format(now)
         with open(filename, 'w') as file:
             file.write(data)
@@ -66,7 +66,7 @@ class Displayboard(Base):
         return data
 
     def getHourlyForecasts(self, hours=False):
-        forecasts = self.getForecasts()
+        forecasts = self.retrieve_data('forecast', self.downloadForecasts)
 
         if(hours is False):
             hours = round(self.width / 2) + 1
