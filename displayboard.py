@@ -174,23 +174,26 @@ class Displayboard(Base):
         interval = int(self.config.get('sceneInterval', 10))
         frame_delay = int(self.config.get('frameDelay', 0))
 
-        interval_start = 0
-        scene = 0
+        interval_start = time.time()
 
         scene_cycle = cycle([0, 1])
+        scene = next(scene_cycle)
 
         while True:
             now = time.time()
-            if now - interval_start > interval:
+            frame_time = now - interval_start
+            fraction = frame_time / interval
+            if fraction > 1:
                 interval_start = now
                 scene = next(scene_cycle)
-                self.drawBlank()
+
+            self.drawBlank()
 
             if scene == 0:
-                self.drawSceneWeather()
+                self.drawSceneWeather(fraction)
 
             if scene == 1:
-                self.drawSceneBus()
+                self.drawSceneBus(fraction)
 
             self.draw()
 
