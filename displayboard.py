@@ -7,6 +7,7 @@ import time
 import os
 import urllib.request as request
 import json
+import hashlib
 from itertools import cycle
 
 
@@ -117,16 +118,54 @@ class Displayboard(Base):
         self.drawTemp()
         self.drawWeather()
 
-    def drawSceneBus(self):
+    def downloadBusTimes(self):
+        bus_config = self.config.get('edinburgh_bus')
+        api_key = bus_config.get('api_key')
+        stop_id = bus_config.get('stop_id')
+
+        date_formatted = time.strftime('%Y%m%d%H')
+        unhashed_key = api_key + date_formatted
+
+        key = hashlib.md5(unhashed_key.encode('utf-8')).hexdigest()
+
+        template = 'http://ws.mybustracker.co.uk/?key={}&module=json'
+        base_url = template.format(key)
+
+        url = '{}&function=getBusTimes&stopId={}'.format(base_url, stop_id)
+
+        data = request.urlopen(url).read().decode('utf-8')
+
+        now = int(time.time())
+        filename = '/tmp/edinburgh_bus-{!s}.json'.format(now)
+        with open(filename, 'w') as file:
+            file.write(data)
+
+        return data
+
+    def drawBusTimes(self):
+        tracked_buses = self.config.get('edinburgh_bus').get('services')
+        tracked_bus_times = [
+            bus for bus in self.bus_times['busTimes']
+            if bus['mnemoService'] in tracked_buses
+        ]
+
         draw = ImageDraw.Draw(self.image)
 
-        draw.text(
-            (0, self.fontHeight - 1),
-            'Bus times',
-            font=self.font
-        )
+        for (index, bus) in enumerate(tracked_bus_times):
+            bus_number = bus['mnemoService'].rjust(2)
+            minutes = [str(time['minutes']) for time in bus['timeDatas']]
+            line = '{!s}:{}'.format(bus_number, ','.join(minutes))
+
+            draw.text((0, index * 6), line, font=self.font)
 
         del draw
+
+    def drawSceneBus(self):
+        self.bus_times = self.retrieve_data('edinburgh_bus',
+                                            self.downloadBusTimes,
+                                            30)
+
+        self.drawBusTimes()
 
     def run(self):
         self.font = ImageFont.load(self.config['fontPath'])

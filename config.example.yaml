@@ -9,7 +9,8 @@ weather: # Weather module
   longitude: # Longitude of device
 
 edinburgh_bus: # Edinburgh Buses (MyBusTracker) module
-  stop_code: # MyBusTracker code for the stop you would like to track
+  stop_id: # MyBusTracker code for the stop you would like to track
+  services: [''] # Array of the tracked buses. Strings and maximum 1 per 6px of vertical space.
   api_key: # API key for MyBusTracker
 
 led:
