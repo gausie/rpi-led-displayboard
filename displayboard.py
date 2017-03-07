@@ -74,16 +74,22 @@ class Displayboard(Base):
 
         return forecasts['hourly']['data'][:hours]
 
-    def drawTemp(self):
+    def drawTemp(self, fraction):
         # Get temperatures from forecasts
         temps = [float(temp['temperature']) for temp in self.forecasts]
+
+        temps_to_show = temps
+        animation_period = 0.075
+        if fraction < animation_period:
+            n_to_show = max(1, (fraction / animation_period) * len(temps))
+            temps_to_show = temps[:int(n_to_show)]
 
         # Create coordinates of line to be drawn at the bottom of the image
         low = min(temps)
 
         coordinates = [
             (i*2, self.height - 1 - round(temp - low))
-            for i, temp in enumerate(temps)
+            for i, temp in enumerate(temps_to_show)
         ]
 
         # Start a drawing action
@@ -113,9 +119,9 @@ class Displayboard(Base):
                 self.image.paste(icon_image, (index * 2, 0))
                 last_icon = icon
 
-    def drawSceneWeather(self):
+    def drawSceneWeather(self, fraction):
         self.forecasts = self.getHourlyForecasts()
-        self.drawTemp()
+        self.drawTemp(fraction)
         self.drawWeather()
 
     def downloadBusTimes(self):
